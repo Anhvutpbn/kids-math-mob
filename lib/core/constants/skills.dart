@@ -1,4 +1,4 @@
-enum SkillId { SK01, SK02, SK03, SK04, SK05, SK06, SK07 }
+enum SkillId { SK01, SK02, SK03, SK04, SK05, SK06, SK07, SK08 }
 
 class SkillMeta {
   final SkillId id;
@@ -24,6 +24,7 @@ const skills = <SkillId, SkillMeta>{
   SkillId.SK05: SkillMeta(id: SkillId.SK05, nameVi: 'Phép cộng đơn giản', nameEn: 'Simple Addition',          dependsOn: [SkillId.SK03],                  order: 5),
   SkillId.SK06: SkillMeta(id: SkillId.SK06, nameVi: 'Phép trừ đơn giản',  nameEn: 'Simple Subtraction',       dependsOn: [SkillId.SK05],                  order: 6),
   SkillId.SK07: SkillMeta(id: SkillId.SK07, nameVi: 'Điền số còn thiếu',  nameEn: 'Missing Number',           dependsOn: [SkillId.SK04, SkillId.SK05],    order: 7),
+  SkillId.SK08: SkillMeta(id: SkillId.SK08, nameVi: 'Chọn min/max',        nameEn: 'Min/Max Selection',         dependsOn: [SkillId.SK04],                  order: 8),
 };
 
 class MasteryThreshold {

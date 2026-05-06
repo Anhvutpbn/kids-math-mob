@@ -34,6 +34,9 @@ dependencies:
   # Charts (Skill Map radar chart)
   fl_chart: ^0.68.0
 
+  # Connectivity
+  connectivity_plus: ^6.0.0
+
   # Utilities
   freezed_annotation: ^2.4.0
   json_annotation: ^4.9.0
