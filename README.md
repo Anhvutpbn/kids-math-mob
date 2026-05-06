@@ -47,6 +47,19 @@ flutter run
 flutter run --dart-define=API_URL=http://192.168.1.x:3000
 ```
 
+## Build APK Android (chạy trong Git Bash)
+
+```bash
+unset _JAVA_OPTIONS && \
+GRADLE_USER_HOME="D:/SDK/gradle" \
+ANDROID_HOME="D:/SDK/android" \
+ANDROID_SDK_ROOT="D:/SDK/android" \
+flutter build apk --release --dart-define=API_URL=http://YOUR_SERVER_IP:3000
+```
+
+> Thay `YOUR_SERVER_IP` bằng IP VPS hoặc IP máy local.
+> File APK output: `build/app/outputs/flutter-apk/app-release.apk`
+
 ## Backend API
 
 [kids-math-api](https://github.com/Anhvutpbn/kids-math-api) — NestJS + MongoDB Atlas
