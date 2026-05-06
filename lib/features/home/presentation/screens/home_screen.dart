@@ -51,9 +51,10 @@ class _HomeContent extends ConsumerWidget {
           children: [
             // Top bar
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: 72, height: 72,
+                  width: 60, height: 60,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.15),
                     shape: BoxShape.circle,
@@ -64,23 +65,27 @@ class _HomeContent extends ConsumerWidget {
                       'assets/images/avatars/${user.avatarId}.png',
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Center(
-                        child: Text('😊', style: TextStyle(fontSize: 36)),
+                        child: Text('😊', style: TextStyle(fontSize: 28)),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Chào ${user.childName ?? "bé"}! 👋',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                      Text(
+                        'Chào ${user.childName ?? "bé"}! 👋',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const Text('Hôm nay học gì nhỉ?',
-                          style: TextStyle(fontSize: 16, color: AppColors.textLight)),
+                          style: TextStyle(fontSize: 13, color: AppColors.textLight)),
                     ],
                   ),
                 ),
+                const SizedBox(width: 6),
                 _TopIconButton(
                   icon: Icons.emoji_events_rounded,
                   color: AppColors.secondary,
@@ -120,30 +125,33 @@ class _HomeContent extends ConsumerWidget {
                 children: [
                   StreakFlame(streak: user.streakCurrent, size: 44),
                   const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${user.streakCurrent} ngày liên tiếp',
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        'Giữ ngọn lửa nhé! 🔥',
-                        style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${user.streakCurrent} ngày liên tiếp',
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Giữ ngọn lửa nhé! 🔥',
+                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         '${user.totalXp} XP',
-                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
                       ),
                       Text(
                         'tổng điểm',
-                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
                       ),
                     ],
                   ),
@@ -277,12 +285,12 @@ class _TopIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 48, height: 48,
+        width: 38, height: 38,
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 26, color: color),
+        child: Icon(icon, size: 20, color: color),
       ),
     );
   }
@@ -451,8 +459,7 @@ class _SkillMapPreview extends ConsumerWidget {
           boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 3))],
         ),
         child: skillMapAsync.when(
-          loading: () => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          loading: () => _SkillDotsRow(
             children: List.generate(8, (i) => _SkillDot(
               emoji: _fallbackEmojis[i],
               name: _fallbackNames[i],
@@ -461,8 +468,7 @@ class _SkillMapPreview extends ConsumerWidget {
               loading: true,
             )),
           ),
-          error: (_, __) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          error: (_, __) => _SkillDotsRow(
             children: List.generate(8, (i) => _SkillDot(
               emoji: _fallbackEmojis[i],
               name: _fallbackNames[i],
@@ -471,8 +477,7 @@ class _SkillMapPreview extends ConsumerWidget {
             )),
           ),
           data: (entries) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            return _SkillDotsRow(
               children: List.generate(8, (i) {
                 final id = _skillOrder[i];
                 SkillMapEntry? entry;
@@ -489,6 +494,24 @@ class _SkillMapPreview extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _SkillDotsRow extends StatelessWidget {
+  final List<Widget> children;
+  const _SkillDotsRow({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: children
+            .expand((dot) => [dot, const SizedBox(width: 8)])
+            .toList()
+            ..removeLast(),
       ),
     );
   }
@@ -522,7 +545,7 @@ class _SkillDot extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 56, height: 56,
+          width: 48, height: 48,
           decoration: BoxDecoration(
             color: loading ? Colors.grey.shade200 : _color.withOpacity(0.15),
             shape: BoxShape.circle,
@@ -531,13 +554,13 @@ class _SkillDot extends StatelessWidget {
           child: Center(
             child: Text(
               locked ? '🔒' : emoji,
-              style: const TextStyle(fontSize: 26),
+              style: const TextStyle(fontSize: 22),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         SizedBox(
-          width: 52,
+          width: 48,
           child: Text(
             name,
             style: const TextStyle(fontSize: 11, color: AppColors.textDark, fontWeight: FontWeight.w600),
