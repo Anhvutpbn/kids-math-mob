@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/audio_helper.dart';
 import '../../data/memory_game_api.dart';
 import '../../models/memory_game_models.dart';
 import '../providers/memory_game_provider.dart';
@@ -240,7 +242,16 @@ class _BoxGrid extends ConsumerWidget {
           box: game.boxes[i],
           index: i,
           phase: game.phase,
-          onTap: () => ref.read(memoryGameProvider.notifier).tapBox(i),
+          onTap: () {
+            final isCorrect = game.boxes[i].number == game.nextExpected;
+            if (isCorrect) {
+              ref.read(audioHelperProvider).playCorrect();
+            } else {
+              HapticFeedback.mediumImpact();
+              ref.read(audioHelperProvider).playWrong();
+            }
+            ref.read(memoryGameProvider.notifier).tapBox(i);
+          },
         ),
       ),
     );

@@ -31,10 +31,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _passCtrl.text,
         );
     if (!mounted) return;
-    final err = ref.read(authStateProvider).error;
-    if (err != null) {
+    final authState = ref.read(authStateProvider);
+    if (authState.hasError) {
+      final err = authState.error;
+      final msg = err.toString().contains('TimeoutException') || err.toString().contains('timeout')
+          ? 'Không kết nối được server. Kiểm tra internet và thử lại.'
+          : err.toString().contains('SocketException') || err.toString().contains('Failed host')
+              ? 'Không tìm thấy server. Kiểm tra kết nối mạng.'
+              : 'Đăng nhập thất bại. Kiểm tra email/mật khẩu.';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đăng nhập thất bại: $err'), backgroundColor: Colors.red),
+        SnackBar(content: Text(msg), backgroundColor: Colors.red, duration: const Duration(seconds: 5)),
       );
     }
   }

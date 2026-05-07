@@ -11,14 +11,20 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   Future<void> login(String email, String password) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).login(email, password),
+      () => ref
+          .read(authRepositoryProvider)
+          .login(email, password)
+          .timeout(const Duration(seconds: 20)),
     );
   }
 
   Future<void> register(String email, String password) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).register(email, password),
+      () => ref
+          .read(authRepositoryProvider)
+          .register(email, password)
+          .timeout(const Duration(seconds: 20)),
     );
   }
 

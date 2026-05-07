@@ -54,7 +54,7 @@ unset _JAVA_OPTIONS && \
 GRADLE_USER_HOME="D:/SDK/gradle" \
 ANDROID_HOME="D:/SDK/android" \
 ANDROID_SDK_ROOT="D:/SDK/android" \
-flutter build apk --release --dart-define=API_URL=http://YOUR_SERVER_IP:3000
+flutter build apk --release --dart-define=API_URL=https://lucky86-game-cloud.top
 ```
 
 > Thay `YOUR_SERVER_IP` bằng IP VPS hoặc IP máy local.
