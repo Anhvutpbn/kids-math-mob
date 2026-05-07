@@ -31,13 +31,8 @@ class _MemoryGameScreenState extends ConsumerState<MemoryGameScreen> {
     if (_submitCalled) return;
     _submitCalled = true;
 
-    // Play feedback immediately — don't wait for API
-    if (game.passed) {
-      HapticFeedback.lightImpact();
-      ref.read(audioHelperProvider).playLevelUp();
-      if (game.durationMs > 0) {
-        await saveMemoryGameBestTime(widget.config.level, game.durationMs);
-      }
+    if (game.passed && game.durationMs > 0) {
+      saveMemoryGameBestTime(widget.config.level, game.durationMs);
     }
 
     MemoryGameSubmitResult? result;
@@ -47,6 +42,13 @@ class _MemoryGameScreenState extends ConsumerState<MemoryGameScreen> {
     } catch (_) {}
 
     if (!mounted) return;
+
+    // Play sound + haptic exactly when popup appears
+    if (game.passed) {
+      HapticFeedback.lightImpact();
+      ref.read(audioHelperProvider).playLevelUp();
+    }
+
     _showResultDialog(game, result);
   }
 
