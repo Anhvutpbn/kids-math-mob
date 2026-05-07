@@ -16,6 +16,9 @@ import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/skill_map/presentation/screens/skill_map_screen.dart';
 import '../features/gamification/presentation/screens/badges_screen.dart';
 import '../features/dashboard/presentation/screens/session_detail_screen.dart';
+import '../features/memory_game/models/memory_game_models.dart';
+import '../features/memory_game/presentation/screens/memory_game_level_select_screen.dart';
+import '../features/memory_game/presentation/screens/memory_game_screen.dart';
 
 /// ChangeNotifier that listens to authStateProvider and notifies GoRouter
 /// to re-run redirect — without recreating the GoRouter instance.
@@ -105,6 +108,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           sessionId: state.pathParameters['id']!,
           date: state.extra as String? ?? '',
         ),
+      ),
+      GoRoute(
+        path: '/memory-game',
+        builder: (_, __) => const MemoryGameLevelSelectScreen(),
+      ),
+      GoRoute(
+        path: '/memory-game/play',
+        builder: (_, state) {
+          final config = state.extra as MemoryGameLevelConfig;
+          return MemoryGameScreen(config: config);
+        },
       ),
     ],
   );

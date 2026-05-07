@@ -9,13 +9,19 @@ class MuteButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final muted = ref.watch(muteProvider);
-    return IconButton(
-      icon: Icon(
-        muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-        size: size,
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: IconButton(
+        icon: Icon(
+          muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+          size: size,
+        ),
+        tooltip: muted ? 'Bật âm thanh' : 'Tắt âm thanh',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: () => ref.read(muteProvider.notifier).toggle(),
       ),
-      tooltip: muted ? 'Bật âm thanh' : 'Tắt âm thanh',
-      onPressed: () => ref.read(muteProvider.notifier).toggle(),
     );
   }
 }

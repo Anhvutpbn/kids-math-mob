@@ -7,3 +7,16 @@ build/
 *.freezed.dart
 pubspec.lock
 .env
+
+# IDE
+.idea/
+.metadata
+*.iml
+
+# Android build artifacts
+android/.kotlin/
+android/*.log
+android/*.hprof
+
+# Tests
+test/

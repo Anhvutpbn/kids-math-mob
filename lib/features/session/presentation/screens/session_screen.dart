@@ -10,7 +10,6 @@ import '../widgets/feedback_overlay.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/audio_helper.dart';
 import '../../../../shared/widgets/mute_button.dart';
-import '../../../../shared/widgets/avatar_widget.dart';
 
 class SessionScreen extends ConsumerWidget {
   const SessionScreen({super.key});
@@ -127,11 +126,6 @@ class SessionScreen extends ConsumerWidget {
                     hintVi: q.hintVi,
                     onDismiss: () => ref.read(sessionProvider.notifier).clearFeedback(),
                   ),
-                // Avatar widget — bottom-right corner
-                Positioned(
-                  bottom: 80, right: 16,
-                  child: AvatarWidget(feedback: state.feedback),
-                ),
               ],
             ),
           );

@@ -24,6 +24,13 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
       questions = await api.getLessonQueue();
     }
 
+    // Filter to focused skill if user tapped a specific skill icon
+    final focusSkillId = ref.read(sessionFocusSkillProvider);
+    if (focusSkillId != null) {
+      final filtered = questions.where((q) => q.skillId == focusSkillId).toList();
+      if (filtered.isNotEmpty) questions = filtered;
+    }
+
     if (questions.isEmpty) {
       throw Exception('Chưa có bài học nào được tạo. Hãy hoàn thành bài kiểm tra xếp lớp trước.');
     }
@@ -159,6 +166,8 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
     }
   }
 }
+
+final sessionFocusSkillProvider = StateProvider<String?>((ref) => null);
 
 final sessionProvider = AsyncNotifierProvider.autoDispose<SessionNotifier, SessionState>(
   SessionNotifier.new,

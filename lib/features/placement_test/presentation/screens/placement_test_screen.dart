@@ -155,7 +155,7 @@ class _FillBlankInputState extends State<_FillBlankInput> {
       Expanded(
         child: TextField(
           controller: _ctrl,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
           autofocus: true,
           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
           textAlign: TextAlign.center,

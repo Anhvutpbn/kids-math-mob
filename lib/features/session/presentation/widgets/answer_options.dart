@@ -187,7 +187,7 @@ class _FillBlankInputState extends State<_FillBlankInput> {
       Expanded(
         child: TextField(
           controller: _ctrl,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
           enabled: widget.enabled,
           autofocus: true,
           onChanged: (_) => setState(() {}),

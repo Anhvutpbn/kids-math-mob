@@ -57,4 +57,10 @@ class ApiEndpoints {
   // Badges
   static const badges = 'badges';
   static const myBadges = 'badges/me';
+
+  // Memory Game
+  static const memoryGameLevels   = 'memory-game/levels';
+  static const memoryGameProgress = 'memory-game/progress';
+  static const memoryGameSubmit   = 'memory-game/submit';
+  static const memoryGameStats    = 'memory-game/stats';
 }

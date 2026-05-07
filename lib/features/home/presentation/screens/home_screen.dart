@@ -1,3 +1,4 @@
+import 'dart:math' show pi;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../providers/home_provider.dart';
 import '../../../../shared/widgets/offline_banner.dart';
 import '../../../../shared/widgets/streak_flame.dart';
 import '../../../../shared/widgets/mute_button.dart';
+import '../../../session/presentation/providers/session_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -72,38 +74,35 @@ class _HomeContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Chào ${user.childName ?? "bé"}! 👋',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const Text('Hôm nay học gì nhỉ?',
-                          style: TextStyle(fontSize: 13, color: AppColors.textLight)),
-                    ],
+                  child: Text(
+                    'Chào ${user.childName ?? "bé"}! 👋',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 _TopIconButton(
                   icon: Icons.emoji_events_rounded,
                   color: AppColors.secondary,
                   onTap: () => context.push('/badges'),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 _TopIconButton(
                   icon: Icons.bar_chart_rounded,
                   color: AppColors.accent,
                   onTap: () => context.push('/dashboard'),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 _LanguageToggle(language: user.language),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 const MuteButton(),
+                const SizedBox(width: 2),
+                _LogoutButton(),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 6),
+            const _GreetingBubble(),
+            const SizedBox(height: 14),
 
             // Weekly review banner
             weeklyReviewAsync.maybeWhen(
@@ -183,7 +182,10 @@ class _HomeContent extends ConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(28),
-                  onTap: () => context.push('/session'),
+                  onTap: () {
+                    ref.read(sessionFocusSkillProvider.notifier).state = null;
+                    context.push('/session');
+                  },
                   child: const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -241,6 +243,10 @@ class _HomeContent extends ConsumerWidget {
             ),
             const SizedBox(height: 14),
             const _SkillMapPreview(),
+            const SizedBox(height: 20),
+
+            // Memory Game card
+            const _MemoryGameCard(),
             const SizedBox(height: 8),
           ],
         ),
@@ -259,7 +265,7 @@ class _LanguageToggle extends ConsumerWidget {
     return GestureDetector(
       onTap: () => ref.read(authStateProvider.notifier).updateLanguage(isVi ? 'en' : 'vi'),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
         decoration: BoxDecoration(
           color: AppColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
@@ -267,7 +273,7 @@ class _LanguageToggle extends ConsumerWidget {
         ),
         child: Text(
           isVi ? '🇻🇳 VI' : '🇬🇧 EN',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
         ),
       ),
     );
@@ -285,7 +291,7 @@ class _TopIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 38, height: 38,
+        width: 32, height: 32,
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
           shape: BoxShape.circle,
@@ -449,50 +455,124 @@ class _SkillMapPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final skillMapAsync = ref.watch(skillMapProvider);
 
-    return GestureDetector(
-      onTap: () => context.push('/skill-map'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 3))],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 3))],
+      ),
+      child: skillMapAsync.when(
+        loading: () => _SkillDotsRow(
+          children: List.generate(8, (i) => _SkillDot(
+            emoji: _fallbackEmojis[i],
+            name: _fallbackNames[i],
+            mastery: 0,
+            locked: true,
+            loading: true,
+          )),
         ),
-        child: skillMapAsync.when(
-          loading: () => _SkillDotsRow(
-            children: List.generate(8, (i) => _SkillDot(
-              emoji: _fallbackEmojis[i],
-              name: _fallbackNames[i],
-              mastery: 0,
-              locked: true,
-              loading: true,
-            )),
+        error: (_, __) => _SkillDotsRow(
+          children: List.generate(8, (i) => _SkillDot(
+            emoji: _fallbackEmojis[i],
+            name: _fallbackNames[i],
+            mastery: 0,
+            locked: true,
+          )),
+        ),
+        data: (entries) {
+          return _SkillDotsRow(
+            children: List.generate(8, (i) {
+              final id = _skillOrder[i];
+              SkillMapEntry? entry;
+              try {
+                entry = entries.firstWhere((e) => e.skillId == id.name);
+              } catch (_) {}
+              final isLocked = entry?.locked ?? true;
+              return _SkillDot(
+                emoji: _fallbackEmojis[i],
+                name: _fallbackNames[i],
+                mastery: entry?.mastery ?? 0,
+                locked: isLocked,
+                onTap: isLocked
+                    ? null
+                    : () => _confirmStartSkill(
+                          context,
+                          ref,
+                          skillId: id.name,
+                          emoji: _fallbackEmojis[i],
+                          name: _fallbackNames[i],
+                        ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmStartSkill(
+    BuildContext context,
+    WidgetRef ref, {
+    required String skillId,
+    required String emoji,
+    required String name,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 56)),
+              const SizedBox(height: 12),
+              Text(
+                'Học "$name" nhé?',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Bé sẵn sàng chưa? 🎉',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Chưa', style: TextStyle(fontSize: 17)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        ref.read(sessionFocusSkillProvider.notifier).state = skillId;
+                        context.push('/session');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Học thôi! 🚀', style: TextStyle(fontSize: 17, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          error: (_, __) => _SkillDotsRow(
-            children: List.generate(8, (i) => _SkillDot(
-              emoji: _fallbackEmojis[i],
-              name: _fallbackNames[i],
-              mastery: 0,
-              locked: true,
-            )),
-          ),
-          data: (entries) {
-            return _SkillDotsRow(
-              children: List.generate(8, (i) {
-                final id = _skillOrder[i];
-                SkillMapEntry? entry;
-                try {
-                  entry = entries.firstWhere((e) => e.skillId == id.name);
-                } catch (_) {}
-                return _SkillDot(
-                  emoji: _fallbackEmojis[i],
-                  name: _fallbackNames[i],
-                  mastery: entry?.mastery ?? 0,
-                  locked: entry?.locked ?? true,
-                );
-              }),
-            );
-          },
         ),
       ),
     );
@@ -523,6 +603,7 @@ class _SkillDot extends StatelessWidget {
   final int mastery;
   final bool locked;
   final bool loading;
+  final VoidCallback? onTap;
 
   const _SkillDot({
     required this.emoji,
@@ -530,6 +611,7 @@ class _SkillDot extends StatelessWidget {
     required this.mastery,
     required this.locked,
     this.loading = false,
+    this.onTap,
   });
 
   Color get _color {
@@ -542,7 +624,7 @@ class _SkillDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final dot = Column(
       children: [
         Container(
           width: 48, height: 48,
@@ -575,6 +657,219 @@ class _SkillDot extends StatelessWidget {
             style: TextStyle(fontSize: 10, color: _color, fontWeight: FontWeight.w700),
           ),
       ],
+    );
+
+    if (onTap == null) return dot;
+    return GestureDetector(
+      onTap: onTap,
+      child: dot,
+    );
+  }
+}
+
+class _LogoutButton extends ConsumerWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Đăng xuất?'),
+            content: const Text('Bạn có chắc muốn đăng xuất không?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Hủy'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          await ref.read(authStateProvider.notifier).logout();
+          if (context.mounted) context.go('/login');
+        }
+      },
+      child: Container(
+        width: 32, height: 32,
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.10),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.logout_rounded, size: 18, color: Colors.red),
+      ),
+    );
+  }
+}
+
+class _MemoryGameCard extends StatelessWidget {
+  const _MemoryGameCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/memory-game'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A237E), Color(0xFF7B1FA2)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF7B1FA2).withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('🧠', style: TextStyle(fontSize: 30)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Siêu Trí Tuệ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Ghi nhớ số · 16 cấp độ · 5 tier huy hiệu',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GreetingBubble extends StatefulWidget {
+  const _GreetingBubble();
+
+  @override
+  State<_GreetingBubble> createState() => _GreetingBubbleState();
+}
+
+class _GreetingBubbleState extends State<_GreetingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+  bool _dismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut);
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    _ctrl.forward();
+    Future.delayed(const Duration(seconds: 4), _dismiss);
+  }
+
+  Future<void> _dismiss() async {
+    if (!mounted || _dismissed) return;
+    await _ctrl.reverse();
+    if (mounted) setState(() => _dismissed = true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+    return FadeTransition(
+      opacity: _opacity,
+      child: ScaleTransition(
+        scale: _scale,
+        alignment: Alignment.topLeft,
+        child: GestureDetector(
+          onTap: _dismiss,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Bubble tail — small rotated square pointing up toward avatar
+              Positioned(
+                left: 24,
+                top: 0,
+                child: Transform.rotate(
+                  angle: pi / 4,
+                  child: Container(
+                    width: 13,
+                    height: 13,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 3)],
+                    ),
+                  ),
+                ),
+              ),
+              // Bubble body
+              Container(
+                margin: const EdgeInsets.only(top: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('🤔', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Hôm nay học gì nhỉ?',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(Icons.close_rounded, size: 15, color: Colors.grey.shade400),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
