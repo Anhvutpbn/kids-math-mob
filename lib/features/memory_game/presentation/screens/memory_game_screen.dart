@@ -249,10 +249,7 @@ class _BoxGrid extends ConsumerWidget {
           index: i,
           phase: game.phase,
           onTap: () {
-            final isCorrect = game.boxes[i].number == game.nextExpected;
-            if (isCorrect) {
-              ref.read(audioHelperProvider).playCorrect();
-            } else {
+            if (game.boxes[i].number != game.nextExpected) {
               HapticFeedback.vibrate();
               ref.read(audioHelperProvider).playWrong();
             }
