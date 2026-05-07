@@ -5,6 +5,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../data/memory_game_api.dart';
 import '../../models/memory_game_models.dart';
 
+String _fmtMs(int ms) {
+  if (ms < 60000) return '${(ms / 1000).toStringAsFixed(1)}s';
+  final m = ms ~/ 60000;
+  final s = ((ms % 60000) / 1000).toStringAsFixed(0);
+  return '${m}m ${s}s';
+}
+
 class MemoryGameLevelSelectScreen extends ConsumerWidget {
   const MemoryGameLevelSelectScreen({super.key});
 
@@ -40,7 +47,10 @@ class MemoryGameLevelSelectScreen extends ConsumerWidget {
       body: progressAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
         error: (_, __) => _ErrorBody(onRetry: () => ref.invalidate(memoryGameProgressProvider)),
-        data: (progress) => _LevelGrid(progress: progress),
+        data: (progress) {
+          final bestTimes = ref.watch(bestTimesProvider).valueOrNull ?? {};
+          return _LevelGrid(progress: progress, bestTimes: bestTimes);
+        },
       ),
     );
   }
@@ -69,7 +79,8 @@ class _ErrorBody extends StatelessWidget {
 
 class _LevelGrid extends StatelessWidget {
   final MemoryGameProgress progress;
-  const _LevelGrid({required this.progress});
+  final Map<int, int> bestTimes;
+  const _LevelGrid({required this.progress, required this.bestTimes});
 
   static const _tierColors = MemoryGameLevelSelectScreen._tierColors;
   static const _tierLabels = MemoryGameLevelSelectScreen._tierLabels;
@@ -113,6 +124,7 @@ class _LevelGrid extends StatelessWidget {
               label: _tierLabels[tier - 1],
               boxCount: _tierBoxes[tier - 1],
               progress: progress,
+              bestTimes: bestTimes,
             ),
             const SizedBox(height: 20),
           ],
@@ -128,6 +140,7 @@ class _TierSection extends StatelessWidget {
   final String label;
   final int boxCount;
   final MemoryGameProgress progress;
+  final Map<int, int> bestTimes;
 
   const _TierSection({
     required this.tier,
@@ -135,6 +148,7 @@ class _TierSection extends StatelessWidget {
     required this.label,
     required this.boxCount,
     required this.progress,
+    required this.bestTimes,
   });
 
   List<MemoryGameLevelConfig> get _levels =>
@@ -205,6 +219,7 @@ class _TierSection extends StatelessWidget {
             config: cfg,
             color: color,
             unlocked: progress.isLevelUnlocked(cfg.level),
+            bestTimeMs: bestTimes[cfg.level],
           )).toList(),
         ),
       ],
@@ -216,15 +231,18 @@ class _LevelChip extends StatelessWidget {
   final MemoryGameLevelConfig config;
   final Color color;
   final bool unlocked;
+  final int? bestTimeMs;
 
   const _LevelChip({
     required this.config,
     required this.color,
     required this.unlocked,
+    this.bestTimeMs,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasBest = bestTimeMs != null;
     return GestureDetector(
       onTap: unlocked
           ? () => context.push('/memory-game/play', extra: config)
@@ -232,7 +250,7 @@ class _LevelChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 72,
-        height: 72,
+        height: hasBest ? 84 : 72,
         decoration: BoxDecoration(
           color: unlocked ? color.withOpacity(0.15) : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
@@ -243,13 +261,36 @@ class _LevelChip extends StatelessWidget {
         ),
         child: Center(
           child: unlocked
-              ? Text(
-                  'LV ${config.level}',
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'LV ${config.level}',
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (hasBest) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_rounded, size: 10, color: color.withOpacity(0.8)),
+                          const SizedBox(width: 2),
+                          Text(
+                            _fmtMs(bestTimeMs!),
+                            style: TextStyle(
+                              color: color.withOpacity(0.9),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 )
               : const Icon(Icons.lock_rounded, color: Colors.white30, size: 22),
         ),

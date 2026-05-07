@@ -9,17 +9,19 @@ class AudioHelper {
   final AudioPlayer _wrongPlayer = AudioPlayer();
   final AudioPlayer _levelUpPlayer = AudioPlayer();
   bool _muted = false;
+  bool _ready = false;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _muted = prefs.getBool(_muteKey) ?? false;
-    // Pre-load all sounds so first play has no latency
+    // Pre-load so subsequent plays are instant
     try {
       await Future.wait([
         _correctPlayer.setSource(AssetSource('audio/correct.mp3')),
         _wrongPlayer.setSource(AssetSource('audio/wrong.mp3')),
         _levelUpPlayer.setSource(AssetSource('audio/levelup.mp3')),
       ]);
+      _ready = true;
     } catch (_) {}
   }
 
@@ -31,16 +33,27 @@ class AudioHelper {
     await prefs.setBool(_muteKey, _muted);
   }
 
-  Future<void> playCorrect() => _resume(_correctPlayer);
-  Future<void> playWrong() => _resume(_wrongPlayer);
-  Future<void> playLevelUp() => _resume(_levelUpPlayer);
+  Future<void> playCorrect() => _play(_correctPlayer, 'audio/correct.mp3');
+  Future<void> playWrong() => _play(_wrongPlayer, 'audio/wrong.mp3');
+  Future<void> playLevelUp() => _play(_levelUpPlayer, 'audio/levelup.mp3');
 
-  Future<void> _resume(AudioPlayer player) async {
+  Future<void> _play(AudioPlayer player, String asset) async {
     if (_muted) return;
     try {
-      await player.seek(Duration.zero);
-      await player.resume();
-    } catch (_) {}
+      if (_ready) {
+        // Fast path: source already loaded, just seek & resume
+        await player.seek(Duration.zero);
+        await player.resume();
+      } else {
+        // Fallback: load and play from scratch (slightly slower but always works)
+        await player.play(AssetSource(asset));
+      }
+    } catch (_) {
+      // If fast path fails (e.g. player in bad state), fall back to play()
+      try {
+        await player.play(AssetSource(asset));
+      } catch (_) {}
+    }
   }
 
   void dispose() {

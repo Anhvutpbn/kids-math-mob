@@ -31,14 +31,20 @@ class _MemoryGameScreenState extends ConsumerState<MemoryGameScreen> {
     if (_submitCalled) return;
     _submitCalled = true;
 
+    // Play feedback immediately — don't wait for API
+    if (game.passed) {
+      HapticFeedback.lightImpact();
+      ref.read(audioHelperProvider).playLevelUp();
+      if (game.durationMs > 0) {
+        await saveMemoryGameBestTime(widget.config.level, game.durationMs);
+      }
+    }
+
     MemoryGameSubmitResult? result;
     try {
       result = await ref.read(memoryGameProvider.notifier).submitResult(widget.config.level);
-      // Refresh progress cache
       ref.invalidate(memoryGameProgressProvider);
-    } catch (_) {
-      // Submit failure is non-blocking
-    }
+    } catch (_) {}
 
     if (!mounted) return;
     _showResultDialog(game, result);
@@ -247,7 +253,7 @@ class _BoxGrid extends ConsumerWidget {
             if (isCorrect) {
               ref.read(audioHelperProvider).playCorrect();
             } else {
-              HapticFeedback.mediumImpact();
+              HapticFeedback.vibrate();
               ref.read(audioHelperProvider).playWrong();
             }
             ref.read(memoryGameProvider.notifier).tapBox(i);
@@ -436,13 +442,37 @@ class _ResultDialog extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              passed
-                  ? 'LV ${config.level} — ${config.numBoxes} ô — $secs giây'
-                  : 'Sai ${game.mistakesMade}/${game.mistakesAllowed + 1} lần',
-              style: const TextStyle(color: Colors.white60, fontSize: 14),
-            ),
+            const SizedBox(height: 12),
+            // Time badge (shown on pass) or mistake count (on fail)
+            if (passed)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.timer_rounded, size: 18, color: Colors.white70),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$secs giây',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Text(
+                'Sai ${game.mistakesMade}/${game.mistakesAllowed + 1} lần',
+                style: const TextStyle(color: Colors.white60, fontSize: 14),
+              ),
 
             // Unlocked next level banner
             if (passed && result != null && config.level < 16)

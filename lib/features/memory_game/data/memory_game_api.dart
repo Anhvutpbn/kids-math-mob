@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../models/memory_game_models.dart';
@@ -35,4 +36,27 @@ final memoryGameApiProvider = Provider<MemoryGameApi>(
 
 final memoryGameProgressProvider = FutureProvider.autoDispose<MemoryGameProgress>((ref) {
   return ref.read(memoryGameApiProvider).getProgress();
+});
+
+// ─── Local best-time storage ─────────────────────────────────────────────────
+
+String _bestTimeKey(int level) => 'mg_best_ms_lv$level';
+
+/// Saves [durationMs] for [level] only if it's a new personal best.
+Future<void> saveMemoryGameBestTime(int level, int durationMs) async {
+  final prefs = await SharedPreferences.getInstance();
+  final key = _bestTimeKey(level);
+  final current = prefs.getInt(key);
+  if (current == null || durationMs < current) {
+    await prefs.setInt(key, durationMs);
+  }
+}
+
+/// Returns a map of level → best time (ms) from local storage.
+final bestTimesProvider = FutureProvider.autoDispose<Map<int, int>>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return {
+    for (var lv = 1; lv <= 16; lv++)
+      if (prefs.getInt(_bestTimeKey(lv)) != null) lv: prefs.getInt(_bestTimeKey(lv))!,
+  };
 });
