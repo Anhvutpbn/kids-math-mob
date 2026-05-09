@@ -42,6 +42,7 @@ class ApiEndpoints {
   static const lessonQueueNext = 'lesson-queue/next';
   static const lessonQueueGenerate = 'lesson-queue/generate';
   static const lessonQueueGenerateWeekly = 'lesson-queue/generate-weekly';
+  static const lessonQueueSkillFocus = 'lesson-queue/skill-focus';
 
   // AI
   static const aiAnalyze = 'ai/analyze';

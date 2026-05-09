@@ -8,27 +8,42 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
   @override
   Future<SessionState> build() async {
     final api = ref.read(sessionApiProvider);
+    final focusSkillId = ref.read(sessionFocusSkillProvider);
+    final focusDifficulty = ref.read(sessionFocusDifficultyProvider);
 
-    // Start session + fetch queue in parallel
+    List<SessionQuestion> questions;
+
+    if (focusSkillId != null && focusDifficulty != null) {
+      // Skill-focus mode: generate queue for specific skill + difficulty
+      final sessionResult = await api.startSession();
+      questions = await api.generateSkillFocusQueue(
+        skillId: focusSkillId,
+        difficulty: focusDifficulty,
+      );
+      if (questions.isEmpty) {
+        throw Exception('Không có câu hỏi cho kỹ năng này. Vui lòng thử lại.');
+      }
+      final now = DateTime.now();
+      return SessionState(
+        sessionId: sessionResult['_id'] as String?,
+        questions: questions,
+        questionStartTime: now,
+        sessionStartTime: now,
+      );
+    }
+
+    // Adaptive mode: use AI-generated daily queue
     final results = await Future.wait([
       api.startSession(),
       api.getLessonQueue(),
     ]);
 
     final session = results[0] as Map<String, dynamic>;
-    var questions = results[1] as List<SessionQuestion>;
+    questions = results[1] as List<SessionQuestion>;
 
-    // If no queue exists, generate one then fetch again
     if (questions.isEmpty) {
       await api.generateQueue();
       questions = await api.getLessonQueue();
-    }
-
-    // Filter to focused skill if user tapped a specific skill icon
-    final focusSkillId = ref.read(sessionFocusSkillProvider);
-    if (focusSkillId != null) {
-      final filtered = questions.where((q) => q.skillId == focusSkillId).toList();
-      if (filtered.isNotEmpty) questions = filtered;
     }
 
     if (questions.isEmpty) {
@@ -43,6 +58,7 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
       sessionStartTime: now,
     );
   }
+
 
   Future<void> submitAnswer(String answer) async {
     final current = state.valueOrNull;
@@ -168,6 +184,7 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
 }
 
 final sessionFocusSkillProvider = StateProvider<String?>((ref) => null);
+final sessionFocusDifficultyProvider = StateProvider<int?>((ref) => null);
 
 final sessionProvider = AsyncNotifierProvider.autoDispose<SessionNotifier, SessionState>(
   SessionNotifier.new,

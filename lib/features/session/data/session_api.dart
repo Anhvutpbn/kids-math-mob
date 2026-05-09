@@ -70,6 +70,24 @@ class SessionApi {
     await _dio.post(ApiEndpoints.lessonQueueGenerate);
   }
 
+  Future<List<SessionQuestion>> generateSkillFocusQueue({
+    required String skillId,
+    required int difficulty,
+    int count = 12,
+  }) async {
+    final res = await _dio.post(ApiEndpoints.lessonQueueSkillFocus, data: {
+      'skillId': skillId,
+      'difficulty': difficulty,
+      'count': count,
+    });
+    final data = res.data['data'];
+    if (data == null) return [];
+    final questions = data['questions'] as List? ?? [];
+    return questions
+        .map((e) => SessionQuestion.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<void> triggerAiAnalyze(String sessionId) async {
     await _dio.post(ApiEndpoints.aiAnalyze, data: {'sessionId': sessionId});
   }

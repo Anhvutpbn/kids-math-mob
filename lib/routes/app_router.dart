@@ -23,6 +23,8 @@ import '../features/multiplication/models/multiplication_models.dart';
 import '../features/multiplication/presentation/screens/multiplication_home_screen.dart';
 import '../features/multiplication/presentation/screens/multiplication_session_screen.dart';
 import '../features/multiplication/presentation/screens/multiplication_history_screen.dart';
+import '../features/multiplication/presentation/screens/multiplication_learn_screen.dart';
+import '../features/session/presentation/screens/skill_level_select_screen.dart';
 
 /// ChangeNotifier that listens to authStateProvider and notifies GoRouter
 /// to re-run redirect — without recreating the GoRouter instance.
@@ -84,6 +86,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
       GoRoute(path: '/session', builder: (_, __) => const SessionScreen()),
       GoRoute(
+        path: '/skill-level-select',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return SkillLevelSelectScreen(
+            skillId: extra['skillId'] as String,
+            emoji: extra['emoji'] as String,
+            name: extra['name'] as String,
+          );
+        },
+      ),
+      GoRoute(
         path: '/result',
         builder: (_, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
@@ -127,6 +140,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/multiplication',
         builder: (_, __) => const MultiplicationHomeScreen(),
+      ),
+      GoRoute(
+        path: '/multiplication/learn',
+        builder: (_, __) => const MultiplicationLearnScreen(),
       ),
       GoRoute(
         path: '/multiplication/session',

@@ -63,6 +63,9 @@ class SessionScreen extends ConsumerWidget {
                   'totalCount': state.results.length,
                   'previousXp': previousXp,
                 });
+                // Reset skill-focus state after session ends
+                ref.read(sessionFocusSkillProvider.notifier).state = null;
+                ref.read(sessionFocusDifficultyProvider.notifier).state = null;
               }
             });
             return const Center(child: CircularProgressIndicator());

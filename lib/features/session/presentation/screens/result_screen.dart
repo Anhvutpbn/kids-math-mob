@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/mastered_skill_dialog.dart';
 import '../../../skill_map/models/skill_map_model.dart';
 import '../../../skill_map/presentation/providers/skill_map_provider.dart';
+import '../providers/session_provider.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   final int stars;
@@ -60,6 +61,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         ? (widget.correctCount / widget.totalCount * 100).round()
         : 0;
     final skillMapAsync = ref.watch(skillMapProvider);
+    // Cap stars based on difficulty chosen in skill-focus mode
+    final focusDifficulty = ref.watch(sessionFocusDifficultyProvider);
+    final maxStars = focusDifficulty != null ? focusDifficulty : 3;
+    final displayStars = widget.stars.clamp(0, maxStars);
 
     return Scaffold(
       body: SafeArea(
@@ -72,7 +77,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(3, (i) {
-                  final filled = i < widget.stars;
+                  final filled = i < displayStars;
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: AnimatedContainer(
