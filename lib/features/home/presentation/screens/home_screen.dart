@@ -247,6 +247,10 @@ class _HomeContent extends ConsumerWidget {
 
             // Memory Game card
             const _MemoryGameCard(),
+            const SizedBox(height: 14),
+
+            // Multiplication card
+            const _MultiplicationCard(),
             const SizedBox(height: 8),
           ],
         ),
@@ -762,6 +766,73 @@ class _MemoryGameCard extends StatelessWidget {
                   SizedBox(height: 4),
                   Text(
                     'Ghi nhớ số · 16 cấp độ · 5 tier huy hiệu',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiplicationCard extends StatelessWidget {
+  const _MultiplicationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/multiplication'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF8F00), Color(0xFFFFB300)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF8F00).withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('🔢', style: TextStyle(fontSize: 30)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bảng Cửu Chương',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Học nhân · 3 cấp độ · Bàn phím số',
                     style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],

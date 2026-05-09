@@ -9,20 +9,14 @@ class AudioHelper {
   final AudioPlayer _wrongPlayer = AudioPlayer();
   final AudioPlayer _levelUpPlayer = AudioPlayer();
   bool _muted = false;
-  bool _ready = false;
+
+  // Cooldown: set synchronously before first await → race-condition safe in Dart event loop
+  int _correctLastMs = 0;
+  int _wrongLastMs = 0;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _muted = prefs.getBool(_muteKey) ?? false;
-    // Pre-load so subsequent plays are instant
-    try {
-      await Future.wait([
-        _correctPlayer.setSource(AssetSource('audio/correct.mp3')),
-        _wrongPlayer.setSource(AssetSource('audio/wrong.mp3')),
-        _levelUpPlayer.setSource(AssetSource('audio/levelup.mp3')),
-      ]);
-      _ready = true;
-    } catch (_) {}
   }
 
   bool get isMuted => _muted;
@@ -33,27 +27,30 @@ class AudioHelper {
     await prefs.setBool(_muteKey, _muted);
   }
 
-  Future<void> playCorrect() => _play(_correctPlayer, 'audio/correct.mp3');
-  Future<void> playWrong() => _play(_wrongPlayer, 'audio/wrong.mp3');
-  Future<void> playLevelUp() => _play(_levelUpPlayer, 'audio/levelup.mp3');
-
-  Future<void> _play(AudioPlayer player, String asset) async {
+  Future<void> playCorrect() async {
     if (_muted) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _correctLastMs < 500) return;
+    _correctLastMs = now;
+    await _safePlay(_correctPlayer, 'audio/correct.mp3');
+  }
+
+  Future<void> playWrong() async {
+    if (_muted) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _wrongLastMs < 600) return;
+    _wrongLastMs = now;
+    await _safePlay(_wrongPlayer, 'audio/wrong.mp3');
+  }
+
+  Future<void> playLevelUp() => _muted ? Future.value() : _safePlay(_levelUpPlayer, 'audio/levelup.mp3');
+
+  // player.play(AssetSource) luôn dừng playback hiện tại và bắt đầu lại từ đầu,
+  // hoạt động đúng ở mọi trạng thái player (stopped, completed, playing, paused).
+  Future<void> _safePlay(AudioPlayer player, String asset) async {
     try {
-      if (_ready) {
-        // Fast path: source already loaded, just seek & resume
-        await player.seek(Duration.zero);
-        await player.resume();
-      } else {
-        // Fallback: load and play from scratch (slightly slower but always works)
-        await player.play(AssetSource(asset));
-      }
-    } catch (_) {
-      // If fast path fails (e.g. player in bad state), fall back to play()
-      try {
-        await player.play(AssetSource(asset));
-      } catch (_) {}
-    }
+      await player.play(AssetSource(asset));
+    } catch (_) {}
   }
 
   void dispose() {

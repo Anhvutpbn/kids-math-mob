@@ -63,4 +63,9 @@ class ApiEndpoints {
   static const memoryGameProgress = 'memory-game/progress';
   static const memoryGameSubmit   = 'memory-game/submit';
   static const memoryGameStats    = 'memory-game/stats';
+
+  // Multiplication (Bảng Cửu Chương)
+  static const multiplicationProgress = 'multiplication/progress';
+  static const multiplicationSessionSave = 'multiplication/session/save';
+  static const multiplicationHistory = 'multiplication/history';
 }

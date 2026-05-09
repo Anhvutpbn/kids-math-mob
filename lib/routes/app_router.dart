@@ -19,6 +19,10 @@ import '../features/dashboard/presentation/screens/session_detail_screen.dart';
 import '../features/memory_game/models/memory_game_models.dart';
 import '../features/memory_game/presentation/screens/memory_game_level_select_screen.dart';
 import '../features/memory_game/presentation/screens/memory_game_screen.dart';
+import '../features/multiplication/models/multiplication_models.dart';
+import '../features/multiplication/presentation/screens/multiplication_home_screen.dart';
+import '../features/multiplication/presentation/screens/multiplication_session_screen.dart';
+import '../features/multiplication/presentation/screens/multiplication_history_screen.dart';
 
 /// ChangeNotifier that listens to authStateProvider and notifies GoRouter
 /// to re-run redirect — without recreating the GoRouter instance.
@@ -119,6 +123,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final config = state.extra as MemoryGameLevelConfig;
           return MemoryGameScreen(config: config);
         },
+      ),
+      GoRoute(
+        path: '/multiplication',
+        builder: (_, __) => const MultiplicationHomeScreen(),
+      ),
+      GoRoute(
+        path: '/multiplication/session',
+        builder: (_, state) {
+          final config = state.extra as MultiLevelConfig;
+          return MultiplicationSessionScreen(config: config);
+        },
+      ),
+      GoRoute(
+        path: '/multiplication/history',
+        builder: (_, __) => const MultiplicationHistoryScreen(),
       ),
     ],
   );
