@@ -132,7 +132,7 @@ class _SkillMapContent extends StatelessWidget {
                 emoji: emoji,
                 name: name,
                 entry: entry,
-                onTap: () => _showSkillDetail(context, emoji, name, entry),
+                onTap: () => _showSkillDetail(context, skillId, emoji, name, entry),
               );
             },
           ),
@@ -144,6 +144,7 @@ class _SkillMapContent extends StatelessWidget {
 
   void _showSkillDetail(
     BuildContext context,
+    SkillId skillId,
     String emoji,
     String name,
     SkillMapEntry? entry,
@@ -154,6 +155,7 @@ class _SkillMapContent extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => _SkillDetailSheet(
+        skillId: skillId.name,
         emoji: emoji,
         name: name,
         entry: entry,
@@ -249,11 +251,12 @@ class _SkillRow extends StatelessWidget {
 }
 
 class _SkillDetailSheet extends StatelessWidget {
+  final String skillId;
   final String emoji;
   final String name;
   final SkillMapEntry? entry;
 
-  const _SkillDetailSheet({required this.emoji, required this.name, this.entry});
+  const _SkillDetailSheet({required this.skillId, required this.emoji, required this.name, this.entry});
 
   String _errorTypeLabel(String? flag) {
     switch (flag) {
@@ -325,7 +328,11 @@ class _SkillDetailSheet extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.push('/session');
+                context.push('/skill-level-select', extra: {
+                  'skillId': skillId,
+                  'emoji': emoji,
+                  'name': name,
+                });
               },
               child: const Text('Luyện tập ngay →'),
             ),
