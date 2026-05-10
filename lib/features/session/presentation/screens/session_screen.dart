@@ -113,10 +113,16 @@ class SessionScreen extends ConsumerWidget {
                       QuestionCard(question: q, attemptCount: state.attemptCount),
                       const SizedBox(height: 16),
                       Expanded(
-                        child: AnswerOptions(
-                          question: q,
-                          onAnswer: _onAnswer(ref, q),
-                          enabled: state.feedback == AnswerFeedback.none,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 420),
+                            child: AnswerOptions(
+                              question: q,
+                              onAnswer: _onAnswer(ref, q),
+                              enabled: state.feedback == AnswerFeedback.none,
+                            ),
+                          ),
                         ),
                       ),
                     ],

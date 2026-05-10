@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/audio_helper.dart';
@@ -16,10 +17,38 @@ class QuestionCard extends ConsumerStatefulWidget {
   ConsumerState<QuestionCard> createState() => _QuestionCardState();
 }
 
+// ── Sticker background data ───────────────────────────────────────────────────
+
+class _Sticker {
+  final String emoji;
+  final double xFraction; // 0.0–1.0 of card width
+  final double yOffset;   // px from top
+  final double fontSize;
+  final double opacity;
+  const _Sticker({
+    required this.emoji,
+    required this.xFraction,
+    required this.yOffset,
+    required this.fontSize,
+    required this.opacity,
+  });
+}
+
+const _stickerPool = [
+  '⭐', '🌟', '✨', '💫', '🎈', '🎉', '🦋',
+  '🌈', '🌸', '🎯', '🐬', '🦄', '🌺', '🎁', '🔔',
+  '🍭', '🎀', '🐥', '🌙', '❤️',
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
 class _QuestionCardState extends ConsumerState<QuestionCard> {
+  late List<_Sticker> _stickers;
+
   @override
   void initState() {
     super.initState();
+    _stickers = _buildStickers();
     _speakQuestion();
   }
 
@@ -27,8 +56,20 @@ class _QuestionCardState extends ConsumerState<QuestionCard> {
   void didUpdateWidget(QuestionCard old) {
     super.didUpdateWidget(old);
     if (old.question.id != widget.question.id) {
+      _stickers = _buildStickers();
       _speakQuestion();
     }
+  }
+
+  List<_Sticker> _buildStickers() {
+    final rng = Random(widget.question.id.hashCode);
+    return List.generate(11, (_) => _Sticker(
+      emoji: _stickerPool[rng.nextInt(_stickerPool.length)],
+      xFraction: rng.nextDouble(),
+      yOffset: rng.nextDouble() * 140,
+      fontSize: 14 + rng.nextDouble() * 12,
+      opacity: 0.13 + rng.nextDouble() * 0.14,
+    ));
   }
 
   String _questionText(String lang) {
@@ -41,7 +82,6 @@ class _QuestionCardState extends ConsumerState<QuestionCard> {
   }
 
   String _ttsLang(String lang) => lang == 'en' ? 'en-US' : 'vi-VN';
-
   String _ttsSpeech(String lang) => mathToSpeech(_questionText(lang), lang: lang);
 
   void _speakQuestion() {
@@ -69,7 +109,9 @@ class _QuestionCardState extends ConsumerState<QuestionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(authStateProvider).whenData((u) => u?.language ?? 'vi').valueOrNull ?? 'vi';
+    final lang = ref.watch(authStateProvider)
+        .whenData((u) => u?.language ?? 'vi')
+        .valueOrNull ?? 'vi';
 
     return GestureDetector(
       onTap: () {
@@ -85,129 +127,137 @@ class _QuestionCardState extends ConsumerState<QuestionCard> {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: Colors.white54, width: 3),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF5C6BC0).withOpacity(0.45),
-              blurRadius: 20,
+              color: const Color(0xFF5C6BC0).withOpacity(0.5),
+              blurRadius: 24,
+              spreadRadius: 2,
               offset: const Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              // Decorative bubbles in background
-              Positioned(
-                top: -28, right: -28,
-                child: Container(
-                  width: 100, height: 100,
-                  decoration: const BoxDecoration(
-                    color: Color(0x1AFFFFFF),
-                    shape: BoxShape.circle,
+          child: LayoutBuilder(builder: (context, constraints) {
+            final cardW = constraints.maxWidth;
+            return Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                // ── Random sticker background ───────────────────────────────
+                ..._stickers.map((s) => Positioned(
+                  left: (s.xFraction * (cardW - 36)).clamp(4.0, cardW - 36),
+                  top: s.yOffset,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: s.opacity,
+                      child: Text(s.emoji, style: TextStyle(fontSize: s.fontSize)),
+                    ),
+                  ),
+                )),
+
+                // ── Decorative bubbles ──────────────────────────────────────
+                const Positioned(
+                  top: -28, right: -28,
+                  child: SizedBox(
+                    width: 100, height: 100,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Color(0x1AFFFFFF),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: -36, left: -18,
-                child: Container(
-                  width: 120, height: 120,
-                  decoration: const BoxDecoration(
-                    color: Color(0x12FFFFFF),
-                    shape: BoxShape.circle,
+                const Positioned(
+                  bottom: -36, left: -18,
+                  child: SizedBox(
+                    width: 120, height: 120,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Color(0x12FFFFFF),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 20, left: -10,
-                child: Container(
-                  width: 50, height: 50,
-                  decoration: const BoxDecoration(
-                    color: Color(0x0FFFFFFF),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              // Main content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Skill emoji badge
-                        Text(
-                          _skillEmoji(widget.question.skillId),
-                          style: const TextStyle(fontSize: 30),
-                        ),
-                        // Speaker button
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(20),
+
+                // ── Main content ────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _skillEmoji(widget.question.skillId),
+                            style: const TextStyle(fontSize: 30),
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.volume_up_rounded, color: Colors.white, size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                'Nghe lại',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.volume_up_rounded, color: Colors.white, size: 18),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Nghe lại',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        _questionText(lang),
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (widget.attemptCount >= 2 && widget.question.hintVi != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(children: [
+                            const Text('💡', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(
+                              widget.question.hintVi!,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )),
+                          ]),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 18),
-                    // Question text
-                    Text(
-                      _questionText(lang),
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    // Hint after 2nd wrong attempt
-                    if (widget.attemptCount >= 2 && widget.question.hintVi != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(children: [
-                          const Text('💡', style: TextStyle(fontSize: 18)),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(
-                            widget.question.hintVi!,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          )),
-                        ]),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
         ),
       ),
     );
