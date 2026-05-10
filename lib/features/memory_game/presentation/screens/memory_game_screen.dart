@@ -254,6 +254,9 @@ class _BoxGrid extends ConsumerWidget {
             if (game.boxes[i].number != game.nextExpected) {
               HapticFeedback.vibrate();
               ref.read(audioHelperProvider).playWrong();
+            } else {
+              HapticFeedback.lightImpact();
+              ref.read(audioHelperProvider).playCorrect();
             }
             ref.read(memoryGameProvider.notifier).tapBox(i);
           },
