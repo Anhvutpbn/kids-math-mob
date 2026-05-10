@@ -46,7 +46,7 @@ class _MemoryGameScreenState extends ConsumerState<MemoryGameScreen> {
     // Play sound + haptic exactly when popup appears
     if (game.passed) {
       HapticFeedback.lightImpact();
-      ref.read(audioHelperProvider).playLevelUp();
+      ref.read(audioHelperProvider).playCorrect();
     }
 
     _showResultDialog(game, result);
@@ -253,7 +253,6 @@ class _BoxGrid extends ConsumerWidget {
           onTap: () {
             if (game.boxes[i].number != game.nextExpected) {
               HapticFeedback.vibrate();
-              ref.read(audioHelperProvider).playWrong();
             } else {
               HapticFeedback.lightImpact();
               ref.read(audioHelperProvider).playCorrect();
