@@ -8,12 +8,14 @@ class AnswerOptions extends StatefulWidget {
   final SessionQuestion question;
   final ValueChanged<String> onAnswer;
   final bool enabled;
+  final bool showHints;
 
   const AnswerOptions({
     super.key,
     required this.question,
     required this.onAnswer,
     required this.enabled,
+    this.showHints = true,
   });
 
   @override
@@ -33,6 +35,16 @@ class _AnswerOptionsState extends State<AnswerOptions> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.question.type == 'vertical_arithmetic') {
+      return _VerticalArithInput(
+        key: ValueKey(widget.question.id),
+        options: widget.question.options,
+        enabled: widget.enabled,
+        showHints: widget.showHints,
+        onSubmit: widget.onAnswer,
+      );
+    }
+
     if (widget.question.type == 'min_max') {
       return _MinMaxSelector(
         key: ValueKey(widget.question.id),
@@ -383,6 +395,156 @@ class _NumberPadInputState extends State<_NumberPadInput> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Vertical arithmetic input: input display + hint 2×2 + numberpad ──────────
+
+class _VerticalArithInput extends StatefulWidget {
+  final List<String> options;
+  final bool enabled;
+  final bool showHints;
+  final ValueChanged<String> onSubmit;
+
+  const _VerticalArithInput({
+    super.key,
+    required this.options,
+    required this.enabled,
+    required this.showHints,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_VerticalArithInput> createState() => _VerticalArithInputState();
+}
+
+class _VerticalArithInputState extends State<_VerticalArithInput> {
+  String _input = '';
+  String? _selectedHint;
+
+  @override
+  void didUpdateWidget(_VerticalArithInput old) {
+    super.didUpdateWidget(old);
+    if (!old.enabled && widget.enabled) {
+      setState(() { _input = ''; _selectedHint = null; });
+    }
+  }
+
+  void _appendDigit(String d) {
+    if (_input.length >= 3) return;
+    setState(() => _input += d);
+  }
+
+  void _backspace() {
+    if (_input.isEmpty) return;
+    setState(() => _input = _input.substring(0, _input.length - 1));
+  }
+
+  void _confirm() {
+    if (_input.isEmpty) return;
+    widget.onSubmit(_input);
+  }
+
+  void _pickHint(String v) {
+    HapticFeedback.lightImpact();
+    setState(() { _input = v; _selectedHint = v; });
+    widget.onSubmit(v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _InputDisplay(input: _input),
+        if (widget.showHints && widget.options.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _HintButtons(
+            options: widget.options,
+            selected: _selectedHint,
+            enabled: widget.enabled,
+            onSelect: _pickHint,
+          ),
+        ],
+        const SizedBox(height: 10),
+        Expanded(
+          child: NumberPad(
+            onDigit: _appendDigit,
+            onBackspace: _backspace,
+            onConfirm: _input.isEmpty ? null : _confirm,
+            enabled: widget.enabled,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── 2×2 hint option buttons ───────────────────────────────────────────────────
+
+const _hintPalette = [
+  Color(0xFFE53935),
+  Color(0xFF1E88E5),
+  Color(0xFF43A047),
+  Color(0xFFFB8C00),
+];
+
+class _HintButtons extends StatelessWidget {
+  final List<String> options;
+  final String? selected;
+  final bool enabled;
+  final ValueChanged<String> onSelect;
+
+  const _HintButtons({
+    required this.options,
+    required this.selected,
+    required this.enabled,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = options.take(4).toList();
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 2.6,
+      children: List.generate(items.length, (i) {
+        final opt = items[i];
+        final color = _hintPalette[i % _hintPalette.length];
+        final isSel = selected == opt;
+        return _BounceCard(
+          onTap: enabled ? () => onSelect(opt) : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            decoration: BoxDecoration(
+              color: isSel ? Colors.white : color,
+              borderRadius: BorderRadius.circular(18),
+              border: isSel ? Border.all(color: color, width: 3) : null,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(isSel ? 0.45 : 0.3),
+                  blurRadius: isSel ? 12 : 6,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                opt,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: isSel ? color : Colors.white,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

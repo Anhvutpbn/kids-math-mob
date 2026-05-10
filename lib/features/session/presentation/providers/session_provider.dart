@@ -185,6 +185,8 @@ class SessionNotifier extends AutoDisposeAsyncNotifier<SessionState> {
 
 final sessionFocusSkillProvider = StateProvider<String?>((ref) => null);
 final sessionFocusDifficultyProvider = StateProvider<int?>((ref) => null);
+// Hint toggle for SK05/SK06 vertical arithmetic (default: show hints)
+final showArithmeticHintsProvider = StateProvider<bool>((ref) => true);
 
 final sessionProvider = AsyncNotifierProvider.autoDispose<SessionNotifier, SessionState>(
   SessionNotifier.new,

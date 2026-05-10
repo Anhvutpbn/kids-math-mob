@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../models/session_models.dart';
 import '../providers/session_provider.dart';
 import '../widgets/question_card.dart';
+import '../widgets/vertical_arithmetic_card.dart';
 import '../widgets/answer_options.dart';
 import '../widgets/feedback_overlay.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -104,17 +105,21 @@ class SessionScreen extends ConsumerWidget {
                             style: const TextStyle(color: AppColors.textLight)),
                       ]),
                       const SizedBox(height: 24),
-                      QuestionCard(question: q, attemptCount: state.attemptCount),
+                      if (q.type == 'vertical_arithmetic')
+                        VerticalArithmeticCard(question: q, attemptCount: state.attemptCount)
+                      else
+                        QuestionCard(question: q, attemptCount: state.attemptCount),
                       const SizedBox(height: 16),
                       Expanded(
                         child: Align(
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 420),
+                            constraints: const BoxConstraints(maxHeight: 480),
                             child: AnswerOptions(
                               question: q,
                               onAnswer: _onAnswer(ref, q),
                               enabled: state.feedback == AnswerFeedback.none,
+                              showHints: ref.watch(showArithmeticHintsProvider),
                             ),
                           ),
                         ),

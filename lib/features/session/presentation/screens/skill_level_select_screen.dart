@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/session_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class SkillLevelSelectScreen extends ConsumerWidget {
   final String skillId;
@@ -63,7 +64,56 @@ class SkillLevelSelectScreen extends ConsumerWidget {
               'Chọn cấp độ phù hợp với bé',
               style: TextStyle(fontSize: 15, color: Color(0xFF757575)),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
+
+            // Hint toggle — chỉ hiện cho SK05 / SK06
+            if (skillId == 'SK05' || skillId == 'SK06')
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lightbulb_outline_rounded,
+                            color: AppColors.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Hiện gợi ý đáp án',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                            Text('4 đáp án để bé chọn nhanh',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: ref.watch(showArithmeticHintsProvider),
+                        onChanged: (v) =>
+                            ref.read(showArithmeticHintsProvider.notifier).state = v,
+                        activeColor: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 20),
 
             // Level cards
             Expanded(
