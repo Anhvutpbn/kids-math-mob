@@ -4,9 +4,7 @@ class ApiEndpoints {
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) return '$envUrl/api/v1/';
-    return kIsWeb
-        ? 'http://localhost:3000/api/v1/'
-        : 'http://10.0.2.2:3000/api/v1/';
+    return 'https://lucky86-game-cloud.top/api/v1/';
   }
 
   // Auth

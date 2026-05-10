@@ -127,15 +127,17 @@ class _MultiplicationSessionScreenState
                   const SizedBox(height: 12),
                   _InputDisplay(state: sessionState),
                   const SizedBox(height: 16),
-                  NumberPad(
-                    onDigit: (d) => ref
-                        .read(multiplicationSessionProvider.notifier)
-                        .appendDigit(d),
-                    onBackspace: () =>
-                        ref.read(multiplicationSessionProvider.notifier).backspace(),
-                    onConfirm: sessionState.input.isEmpty ? null : _handleConfirm,
-                    enabled: sessionState.phase == MultiplicationPhase.answering &&
-                        !sessionState.isDone,
+                  Expanded(
+                    child: NumberPad(
+                      onDigit: (d) => ref
+                          .read(multiplicationSessionProvider.notifier)
+                          .appendDigit(d),
+                      onBackspace: () =>
+                          ref.read(multiplicationSessionProvider.notifier).backspace(),
+                      onConfirm: sessionState.input.isEmpty ? null : _handleConfirm,
+                      enabled: sessionState.phase == MultiplicationPhase.answering &&
+                          !sessionState.isDone,
+                    ),
                   ),
                 ],
               ),

@@ -61,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Container(
                   width: 100, height: 100,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
+                    color: AppColors.primary.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.calculate_rounded, size: 56, color: AppColors.primary),

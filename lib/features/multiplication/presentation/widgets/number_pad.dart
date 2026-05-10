@@ -19,13 +19,13 @@ class NumberPad extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _row(['1', '2', '3']),
-        const SizedBox(height: 10),
-        _row(['4', '5', '6']),
-        const SizedBox(height: 10),
-        _row(['7', '8', '9']),
-        const SizedBox(height: 10),
-        _bottomRow(),
+        Expanded(child: _row(['1', '2', '3'])),
+        const SizedBox(height: 8),
+        Expanded(child: _row(['4', '5', '6'])),
+        const SizedBox(height: 8),
+        Expanded(child: _row(['7', '8', '9'])),
+        const SizedBox(height: 8),
+        Expanded(child: _bottomRow()),
       ],
     );
   }
@@ -95,7 +95,6 @@ class _DigitButton extends StatelessWidget {
         }
       },
       child: Container(
-        height: 66,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -136,7 +135,6 @@ class _BackspaceButton extends StatelessWidget {
         }
       },
       child: Container(
-        height: 66,
         decoration: BoxDecoration(
           color: const Color(0xFFFFE0B2),
           borderRadius: BorderRadius.circular(18),
@@ -168,7 +166,6 @@ class _ConfirmButton extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        height: 66,
         decoration: BoxDecoration(
           color: active ? const Color(0xFF2E7D32) : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(18),
