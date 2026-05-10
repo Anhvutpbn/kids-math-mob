@@ -103,23 +103,14 @@ class SessionScreen extends ConsumerWidget {
                       ]),
                       const SizedBox(height: 24),
                       QuestionCard(question: q, attemptCount: state.attemptCount),
-                      SizedBox(height: q.type == 'fill_blank' ? 16 : 32),
-                      if (q.type == 'fill_blank')
-                        Expanded(
-                          child: AnswerOptions(
-                            question: q,
-                            onAnswer: _onAnswer(ref, q),
-                            enabled: state.feedback == AnswerFeedback.none,
-                          ),
-                        )
-                      else ...[
-                        AnswerOptions(
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: AnswerOptions(
                           question: q,
                           onAnswer: _onAnswer(ref, q),
                           enabled: state.feedback == AnswerFeedback.none,
                         ),
-                        const Spacer(),
-                      ],
+                      ),
                     ],
                   ),
                 ),

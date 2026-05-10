@@ -46,40 +46,44 @@ class _AnswerOptionsState extends State<AnswerOptions> {
     }
 
     if (widget.question.type == 'multiple_choice') {
-      return Column(
-        children: widget.question.options.map((opt) {
-          final isSelected = _selected == opt;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: SizedBox(
-              width: double.infinity,
-              height: 76,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSelected ? AppColors.primary : Colors.white,
-                  foregroundColor: isSelected ? Colors.white : AppColors.textDark,
-                  side: BorderSide(
-                    color: isSelected ? AppColors.primary : Colors.grey.shade300,
-                    width: 2.5,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: isSelected ? 6 : 2,
+      final options = widget.question.options;
+      final List<Widget> children = [];
+      for (int i = 0; i < options.length; i++) {
+        final opt = options[i];
+        final isSelected = _selected == opt;
+        children.add(Expanded(
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSelected ? AppColors.primary : Colors.white,
+                foregroundColor: isSelected ? Colors.white : AppColors.textDark,
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                  width: 2.5,
                 ),
-                onPressed: widget.enabled
-                    ? () {
-                        setState(() => _selected = opt);
-                        widget.onAnswer(opt);
-                      }
-                    : null,
-                child: Text(opt, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                elevation: isSelected ? 6 : 2,
               ),
+              onPressed: widget.enabled
+                  ? () {
+                      setState(() => _selected = opt);
+                      widget.onAnswer(opt);
+                    }
+                  : null,
+              child: Text(opt,
+                  style: const TextStyle(
+                      fontSize: 28, fontWeight: FontWeight.w700)),
             ),
-          );
-        }).toList(),
-      );
+          ),
+        ));
+        if (i < options.length - 1) children.add(const SizedBox(height: 12));
+      }
+      return Column(children: children);
     }
 
-    // Fill blank → NumberPad (SK05, SK06, SK07)
+    // fill_blank → NumberPad (SK05 cộng, SK06 trừ, SK07 điền số)
     return _NumberPadInput(
       key: ValueKey(widget.question.id),
       enabled: widget.enabled,
@@ -88,18 +92,18 @@ class _AnswerOptionsState extends State<AnswerOptions> {
   }
 }
 
-// ── Min/Max selector — colorful number squares ────────────────────────────────
+// ── Min/Max selector — adaptive grid fills available space ────────────────────
 
 const _squareColors = [
-  Color(0xFFE53935), // red
-  Color(0xFF1E88E5), // blue
-  Color(0xFF43A047), // green
-  Color(0xFFFB8C00), // orange
-  Color(0xFF8E24AA), // purple
-  Color(0xFF00ACC1), // teal
-  Color(0xFFFFB300), // amber
-  Color(0xFFD81B60), // pink
-  Color(0xFF558B2F), // dark green
+  Color(0xFFE53935),
+  Color(0xFF1E88E5),
+  Color(0xFF43A047),
+  Color(0xFFFB8C00),
+  Color(0xFF8E24AA),
+  Color(0xFF00ACC1),
+  Color(0xFFFFB300),
+  Color(0xFFD81B60),
+  Color(0xFF558B2F),
 ];
 
 class _MinMaxSelector extends StatelessWidget {
@@ -116,55 +120,81 @@ class _MinMaxSelector extends StatelessWidget {
     required this.onAnswer,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      children: List.generate(options.length, (i) {
-        final opt = options[i];
-        final color = _squareColors[i % _squareColors.length];
-        final isSelected = selected == opt;
-        return GestureDetector(
-          onTap: enabled ? () => onAnswer(opt) : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 82,
-            height: 82,
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.white : color,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? color : Colors.transparent,
-                width: 4,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(isSelected ? 0.5 : 0.35),
-                  blurRadius: isSelected ? 12 : 6,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+  static const _spacing = 12.0;
+
+  int get _cols => options.length <= 4 ? 2 : 3;
+  int get _rows => (options.length / _cols).ceil();
+
+  Widget _square(String opt, int i, double height) {
+    final color = _squareColors[i % _squareColors.length];
+    final isSel = selected == opt;
+    return GestureDetector(
+      onTap: enabled ? () => onAnswer(opt) : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: height,
+        decoration: BoxDecoration(
+          color: isSel ? Colors.white : color,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSel ? color : Colors.transparent,
+            width: 4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(isSel ? 0.5 : 0.35),
+              blurRadius: isSel ? 12 : 6,
+              offset: const Offset(0, 4),
             ),
-            child: Center(
-              child: Text(
-                opt,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: isSelected ? color : Colors.white,
-                ),
-              ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            opt,
+            style: TextStyle(
+              fontSize: 34,
+              fontWeight: FontWeight.w900,
+              color: isSel ? color : Colors.white,
             ),
           ),
-        );
-      }),
+        ),
+      ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final squareH = constraints.maxHeight.isFinite
+          ? ((constraints.maxHeight - _spacing * (_rows - 1)) / _rows)
+              .clamp(72.0, 140.0)
+          : 100.0;
+
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_rows, (r) {
+          final start = r * _cols;
+          final rowItems = <Widget>[];
+          for (int c = 0; c < _cols; c++) {
+            if (c > 0) rowItems.add(const SizedBox(width: _spacing));
+            final i = start + c;
+            rowItems.add(Expanded(
+              child: i < options.length
+                  ? _square(options[i], i, squareH)
+                  : SizedBox(height: squareH),
+            ));
+          }
+          return Padding(
+            padding: EdgeInsets.only(top: r > 0 ? _spacing : 0),
+            child: Row(children: rowItems),
+          );
+        }),
+      );
+    });
   }
 }
 
-// ── NumberPad input (SK05 cộng, SK06 trừ, SK07 điền số) ──────────────────────
+// ── NumberPad input (SK05, SK06, SK07) ────────────────────────────────────────
 
 class _NumberPadInput extends StatefulWidget {
   final bool enabled;
@@ -182,7 +212,6 @@ class _NumberPadInputState extends State<_NumberPadInput> {
   @override
   void didUpdateWidget(_NumberPadInput old) {
     super.didUpdateWidget(old);
-    // Clear input when feedback dismisses (enabled flips false→true = retry same question)
     if (!old.enabled && widget.enabled) {
       setState(() => _input = '');
     }
