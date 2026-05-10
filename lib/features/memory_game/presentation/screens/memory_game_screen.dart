@@ -47,6 +47,9 @@ class _MemoryGameScreenState extends ConsumerState<MemoryGameScreen> {
     if (game.passed) {
       HapticFeedback.lightImpact();
       ref.read(audioHelperProvider).playCorrect();
+    } else {
+      HapticFeedback.vibrate();
+      ref.read(audioHelperProvider).playWrong();
     }
 
     _showResultDialog(game, result);
@@ -251,12 +254,7 @@ class _BoxGrid extends ConsumerWidget {
           index: i,
           phase: game.phase,
           onTap: () {
-            if (game.boxes[i].number != game.nextExpected) {
-              HapticFeedback.vibrate();
-            } else {
-              HapticFeedback.lightImpact();
-              ref.read(audioHelperProvider).playCorrect();
-            }
+            HapticFeedback.lightImpact();
             ref.read(memoryGameProvider.notifier).tapBox(i);
           },
         ),
