@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/session_models.dart';
+import '../../../multiplication/presentation/widgets/number_pad.dart';
 
 class AnswerOptions extends StatefulWidget {
   final SessionQuestion question;
@@ -78,8 +79,8 @@ class _AnswerOptionsState extends State<AnswerOptions> {
       );
     }
 
-    // Fill blank
-    return _FillBlankInput(
+    // Fill blank → NumberPad (SK05, SK06, SK07)
+    return _NumberPadInput(
       key: ValueKey(widget.question.id),
       enabled: widget.enabled,
       onSubmit: widget.onAnswer,
@@ -163,58 +164,99 @@ class _MinMaxSelector extends StatelessWidget {
   }
 }
 
-// ── Fill blank input ───────────────────────────────────────────────────────────
+// ── NumberPad input (SK05 cộng, SK06 trừ, SK07 điền số) ──────────────────────
 
-class _FillBlankInput extends StatefulWidget {
+class _NumberPadInput extends StatefulWidget {
   final bool enabled;
   final ValueChanged<String> onSubmit;
 
-  const _FillBlankInput({super.key, required this.enabled, required this.onSubmit});
+  const _NumberPadInput({super.key, required this.enabled, required this.onSubmit});
 
   @override
-  State<_FillBlankInput> createState() => _FillBlankInputState();
+  State<_NumberPadInput> createState() => _NumberPadInputState();
 }
 
-class _FillBlankInputState extends State<_FillBlankInput> {
-  final _ctrl = TextEditingController();
+class _NumberPadInputState extends State<_NumberPadInput> {
+  String _input = '';
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void didUpdateWidget(_NumberPadInput old) {
+    super.didUpdateWidget(old);
+    // Clear input when feedback dismisses (enabled flips false→true = retry same question)
+    if (!old.enabled && widget.enabled) {
+      setState(() => _input = '');
+    }
+  }
+
+  void _appendDigit(String d) {
+    if (_input.length >= 3) return;
+    setState(() => _input += d);
+  }
+
+  void _backspace() {
+    if (_input.isEmpty) return;
+    setState(() => _input = _input.substring(0, _input.length - 1));
+  }
+
+  void _confirm() {
+    if (_input.isEmpty) return;
+    widget.onSubmit(_input);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(
-        child: TextField(
-          controller: _ctrl,
-          keyboardType: TextInputType.text,
-          enabled: widget.enabled,
-          autofocus: true,
-          onChanged: (_) => setState(() {}),
-          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800),
-          textAlign: TextAlign.center,
-          decoration: InputDecoration(
-            hintText: '?',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 18),
+    return Column(
+      children: [
+        _InputDisplay(input: _input),
+        const SizedBox(height: 12),
+        Expanded(
+          child: NumberPad(
+            onDigit: _appendDigit,
+            onBackspace: _backspace,
+            onConfirm: _input.isEmpty ? null : _confirm,
+            enabled: widget.enabled,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InputDisplay extends StatelessWidget {
+  final String input;
+  const _InputDisplay({required this.input});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasInput = input.isNotEmpty;
+    return Container(
+      width: double.infinity,
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: hasInput
+              ? AppColors.primary.withOpacity(0.6)
+              : Colors.grey.shade300,
+          width: 2.5,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          hasInput ? input : 'Nhập đáp án...',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: hasInput ? AppColors.textDark : Colors.grey.shade400,
           ),
         ),
       ),
-      const SizedBox(width: 12),
-      SizedBox(
-        width: 72, height: 72,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            padding: EdgeInsets.zero,
-            backgroundColor: AppColors.primary,
-          ),
-          onPressed: widget.enabled && _ctrl.text.isNotEmpty
-              ? () => widget.onSubmit(_ctrl.text.trim())
-              : null,
-          child: const Icon(Icons.check_rounded, size: 34, color: Colors.white),
-        ),
-      ),
-    ]);
+    );
   }
 }

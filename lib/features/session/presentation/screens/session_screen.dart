@@ -103,22 +103,23 @@ class SessionScreen extends ConsumerWidget {
                       ]),
                       const SizedBox(height: 24),
                       QuestionCard(question: q, attemptCount: state.attemptCount),
-                      const SizedBox(height: 32),
-                      AnswerOptions(
-                        question: q,
-                        onAnswer: (answer) async {
-                          await ref.read(sessionProvider.notifier).submitAnswer(answer);
-                          final isCorrect = answer.trim().toLowerCase() ==
-                              q.correctAnswer.trim().toLowerCase();
-                          if (isCorrect) {
-                            ref.read(audioHelperProvider).playCorrect();
-                          } else {
-                            ref.read(audioHelperProvider).playWrong();
-                          }
-                        },
-                        enabled: state.feedback == AnswerFeedback.none,
-                      ),
-                      const Spacer(),
+                      SizedBox(height: q.type == 'fill_blank' ? 16 : 32),
+                      if (q.type == 'fill_blank')
+                        Expanded(
+                          child: AnswerOptions(
+                            question: q,
+                            onAnswer: _onAnswer(ref, q),
+                            enabled: state.feedback == AnswerFeedback.none,
+                          ),
+                        )
+                      else ...[
+                        AnswerOptions(
+                          question: q,
+                          onAnswer: _onAnswer(ref, q),
+                          enabled: state.feedback == AnswerFeedback.none,
+                        ),
+                        const Spacer(),
+                      ],
                     ],
                   ),
                 ),
@@ -135,6 +136,18 @@ class SessionScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  ValueChanged<String> _onAnswer(WidgetRef ref, SessionQuestion q) {
+    return (answer) async {
+      await ref.read(sessionProvider.notifier).submitAnswer(answer);
+      final isCorrect = answer.trim().toLowerCase() == q.correctAnswer.trim().toLowerCase();
+      if (isCorrect) {
+        ref.read(audioHelperProvider).playCorrect();
+      } else {
+        ref.read(audioHelperProvider).playWrong();
+      }
+    };
   }
 
   void _showQuitDialog(BuildContext context, WidgetRef ref) {
