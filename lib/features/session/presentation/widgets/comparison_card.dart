@@ -1,48 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/utils/audio_helper.dart';
 import '../../../../core/utils/tts_helper.dart';
 import '../../../../core/utils/math_speech.dart';
 import '../../models/session_models.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-
-// ── Parse "a + b = ?" into structured data ───────────────────────────────────
-
-class VerticalArith {
-  final int? op1;    // null if this slot is the blank
-  final int? op2;
-  final int? result;
-  final String op;   // '+' or '-'
-  final String blank; // 'op1' | 'op2' | 'result'
-
-  const VerticalArith({
-    required this.op1,
-    required this.op2,
-    required this.result,
-    required this.op,
-    required this.blank,
-  });
-
-  static VerticalArith? tryParse(String questionVi) {
-    final re = RegExp(r'^(\?|\d+)\s*([+\-])\s*(\?|\d+)\s*=\s*(\?|\d+)$');
-    final m = re.firstMatch(questionVi.trim());
-    if (m == null) return null;
-    final a = m.group(1)!;
-    final operation = m.group(2)!;
-    final b = m.group(3)!;
-    final r = m.group(4)!;
-    return VerticalArith(
-      op1: a == '?' ? null : int.tryParse(a),
-      op2: b == '?' ? null : int.tryParse(b),
-      result: r == '?' ? null : int.tryParse(r),
-      op: operation,
-      blank: a == '?' ? 'op1' : b == '?' ? 'op2' : 'result',
-    );
-  }
-}
-
-// ── Sticker data ──────────────────────────────────────────────────────────────
 
 class _Sticker {
   final String emoji;
@@ -65,23 +27,32 @@ const _stickerPool = [
   '🍭', '🎀', '🐥', '🌙', '❤️',
 ];
 
-// ── Widget ────────────────────────────────────────────────────────────────────
+// Parses "5 ___ 12: điền dấu so sánh" → (5, 12) or null
+(int, int)? _parseComparison(String questionVi) {
+  final re = RegExp(r'^(-?\d+)\s*___\s*(-?\d+)');
+  final m = re.firstMatch(questionVi.trim());
+  if (m == null) return null;
+  final a = int.tryParse(m.group(1)!);
+  final b = int.tryParse(m.group(2)!);
+  if (a == null || b == null) return null;
+  return (a, b);
+}
 
-class VerticalArithmeticCard extends ConsumerStatefulWidget {
+class ComparisonCard extends ConsumerStatefulWidget {
   final SessionQuestion question;
   final int attemptCount;
 
-  const VerticalArithmeticCard({
+  const ComparisonCard({
     super.key,
     required this.question,
     required this.attemptCount,
   });
 
   @override
-  ConsumerState<VerticalArithmeticCard> createState() => _VerticalArithmeticCardState();
+  ConsumerState<ComparisonCard> createState() => _ComparisonCardState();
 }
 
-class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard> {
+class _ComparisonCardState extends ConsumerState<ComparisonCard> {
   late List<_Sticker> _stickers;
 
   @override
@@ -92,7 +63,7 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
   }
 
   @override
-  void didUpdateWidget(VerticalArithmeticCard old) {
+  void didUpdateWidget(ComparisonCard old) {
     super.didUpdateWidget(old);
     if (old.question.id != widget.question.id) {
       _stickers = _buildStickers();
@@ -124,34 +95,19 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
     });
   }
 
-  String _skillEmoji(String skillId) {
-    switch (skillId) {
-      case 'SK05': return '➕';
-      case 'SK06': return '➖';
-      default:     return '📚';
-    }
-  }
-
-  // ── Number box ─────────────────────────────────────────────────────────────
-
-  Widget _numBox(int? value, {required bool isBlank}) {
+  Widget _numBox(int value) {
     return Container(
-      width: 108,
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: 100,
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: isBlank ? const Color(0xFFFFF9C4) : Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isBlank ? const Color(0xFFFFA000) : Colors.grey.shade200,
-          width: isBlank ? 3 : 1.5,
-        ),
+        border: Border.all(color: Colors.grey.shade200, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: isBlank
-                ? const Color(0xFFFFA000).withOpacity(0.25)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: isBlank ? 10 : 6,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 6,
             offset: const Offset(0, 3),
           ),
         ],
@@ -160,11 +116,11 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            value?.toString() ?? '?',
-            style: TextStyle(
+            '$value',
+            style: const TextStyle(
               fontSize: 44,
               fontWeight: FontWeight.w900,
-              color: isBlank ? const Color(0xFF9E9E9E) : const Color(0xFF1A237E),
+              color: Color(0xFF1A237E),
             ),
           ),
         ),
@@ -172,72 +128,32 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
     );
   }
 
-  // ── Vertical layout ────────────────────────────────────────────────────────
-
-  Widget _arithmeticLayout(VerticalArith va) {
-    const opW = 48.0;
-    const rowGap = 10.0;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Row 1: op1
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: opW),
-            _numBox(va.op1, isBlank: va.blank == 'op1'),
-          ],
+  Widget _blankBox() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF9C4),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFFA000), width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFA000).withOpacity(0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          '?',
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF9E9E9E),
+          ),
         ),
-        const SizedBox(height: rowGap),
-        // Row 2: operator + op2
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: opW,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Text(
-                    va.op,
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF1A237E),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            _numBox(va.op2, isBlank: va.blank == 'op2'),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Divider line
-        LayoutBuilder(builder: (_, c) {
-          final lineW = c.maxWidth.isFinite ? c.maxWidth : 160.0;
-          return Container(
-            width: lineW,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A237E),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          );
-        }),
-        const SizedBox(height: 8),
-        // Row 3: result
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: opW),
-            _numBox(va.result, isBlank: va.blank == 'result'),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
@@ -246,7 +162,7 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
     final lang = ref.watch(authStateProvider)
         .whenData((u) => u?.language ?? 'vi')
         .valueOrNull ?? 'vi';
-    final va = VerticalArith.tryParse(widget.question.questionVi);
+    final parsed = _parseComparison(widget.question.questionVi);
 
     return GestureDetector(
       onTap: () {
@@ -317,10 +233,7 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _skillEmoji(widget.question.skillId),
-                            style: const TextStyle(fontSize: 28),
-                          ),
+                          const Text('⚖️', style: TextStyle(fontSize: 28)),
                           GestureDetector(
                             onTap: () {
                               final muted = ref.read(muteProvider);
@@ -349,18 +262,27 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // Vertical arithmetic display
-                      Center(
-                        child: va != null
-                            ? _arithmeticLayout(va)
-                            : Text(
-                                widget.question.questionVi,
-                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Color(0xFF1A237E)),
-                                textAlign: TextAlign.center,
-                              ),
-                      ),
+                      // Comparison display: [num1]  [?]  [num2]
+                      if (parsed != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _numBox(parsed.$1),
+                            const SizedBox(width: 16),
+                            _blankBox(),
+                            const SizedBox(width: 16),
+                            _numBox(parsed.$2),
+                          ],
+                        )
+                      else
+                        Text(
+                          widget.question.questionVi,
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1A237E)),
+                          textAlign: TextAlign.center,
+                        ),
 
                       // Hint
                       if (widget.attemptCount >= 2 && widget.question.hintVi != null) ...[

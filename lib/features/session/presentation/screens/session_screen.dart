@@ -6,6 +6,7 @@ import '../../models/session_models.dart';
 import '../providers/session_provider.dart';
 import '../widgets/question_card.dart';
 import '../widgets/vertical_arithmetic_card.dart';
+import '../widgets/comparison_card.dart';
 import '../widgets/answer_options.dart';
 import '../widgets/feedback_overlay.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -107,6 +108,8 @@ class SessionScreen extends ConsumerWidget {
                       const SizedBox(height: 24),
                       if (q.type == 'vertical_arithmetic')
                         VerticalArithmeticCard(question: q, attemptCount: state.attemptCount)
+                      else if (q.skillId == 'SK04')
+                        ComparisonCard(question: q, attemptCount: state.attemptCount)
                       else
                         QuestionCard(question: q, attemptCount: state.attemptCount),
                       const SizedBox(height: 16),

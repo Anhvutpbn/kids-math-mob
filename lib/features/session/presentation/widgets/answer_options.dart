@@ -454,19 +454,22 @@ class _VerticalArithInputState extends State<_VerticalArithInput> {
 
   @override
   Widget build(BuildContext context) {
+    final showingHints = widget.showHints && widget.options.isNotEmpty;
     return Column(
       children: [
-        _InputDisplay(input: _input),
-        if (widget.showHints && widget.options.isNotEmpty) ...[
+        if (!showingHints) ...[
+          _InputDisplay(input: _input),
           const SizedBox(height: 10),
+        ],
+        if (showingHints) ...[
           _HintButtons(
             options: widget.options,
             selected: _selectedHint,
             enabled: widget.enabled,
             onSelect: _pickHint,
           ),
+          const SizedBox(height: 10),
         ],
-        const SizedBox(height: 10),
         Expanded(
           child: NumberPad(
             onDigit: _appendDigit,
