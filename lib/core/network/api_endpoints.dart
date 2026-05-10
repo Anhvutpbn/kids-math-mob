@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class ApiEndpoints {
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_URL');
