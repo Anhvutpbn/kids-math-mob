@@ -156,16 +156,15 @@ class _VerticalArithmeticCardState extends ConsumerState<VerticalArithmeticCard>
           ),
         ],
       ),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value?.toString() ?? '?',
-            style: TextStyle(
-              fontSize: 44,
-              fontWeight: FontWeight.w900,
-              color: isBlank ? const Color(0xFF9E9E9E) : const Color(0xFF1A237E),
-            ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Text(
+          value?.toString() ?? '?',
+          style: TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.w900,
+            color: isBlank ? const Color(0xFF9E9E9E) : const Color(0xFF1A237E),
           ),
         ),
       ),
