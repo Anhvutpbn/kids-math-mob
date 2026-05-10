@@ -75,13 +75,7 @@ class SessionScreen extends ConsumerWidget {
           if (q == null) return const SizedBox();
 
           return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFF5F0FF), Color(0xFFF0F8FF)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+            color: const Color(0xFFFFFBF0),
             child: SafeArea(
             child: Stack(
               children: [

@@ -48,11 +48,15 @@ class _AnswerOptionsState extends State<AnswerOptions> {
 
     if (widget.question.type == 'multiple_choice') {
       final options = widget.question.options;
+      const labels = ['A', 'B', 'C', 'D'];
       final List<Widget> children = [];
+
       for (int i = 0; i < options.length; i++) {
         final opt = options[i];
         final color = _palette[i % _palette.length];
+        final label = i < labels.length ? labels[i] : '${i + 1}';
         final isSel = _selected == opt;
+
         children.add(Expanded(
           child: _BounceCard(
             onTap: widget.enabled
@@ -63,34 +67,87 @@ class _AnswerOptionsState extends State<AnswerOptions> {
                   }
                 : null,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+              duration: const Duration(milliseconds: 200),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isSel ? Colors.white : color,
-                borderRadius: BorderRadius.circular(24),
-                border: isSel ? Border.all(color: color, width: 4) : null,
+                color: isSel ? color : Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isSel ? color : Colors.grey.shade200,
+                  width: isSel ? 2.5 : 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(isSel ? 0.5 : 0.3),
+                    color: isSel
+                        ? color.withOpacity(0.35)
+                        : Colors.black.withOpacity(0.07),
                     blurRadius: isSel ? 14 : 6,
-                    offset: const Offset(0, 5),
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Center(
-                child: Text(
-                  opt,
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    color: isSel ? color : Colors.white,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Centered answer text
+                  Text(
+                    opt,
+                    style: TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                      color: isSel ? Colors.white : const Color(0xFF1A237E),
+                    ),
                   ),
-                ),
+                  // Letter badge — left side
+                  Positioned(
+                    left: 16,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: isSel
+                              ? Colors.white.withOpacity(0.3)
+                              : color,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isSel ? Colors.white : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Check icon — right side when selected
+                  if (isSel)
+                    const Positioned(
+                      right: 16,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
         ));
-        if (i < options.length - 1) children.add(const SizedBox(height: 12));
+
+        if (i < options.length - 1) children.add(const SizedBox(height: 10));
       }
       return Column(children: children);
     }
@@ -169,7 +226,8 @@ class _BounceCardState extends State<_BounceCard>
       onTap: _tap,
       child: AnimatedBuilder(
         animation: _scale,
-        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        builder: (_, child) =>
+            Transform.scale(scale: _scale.value, child: child),
         child: widget.child,
       ),
     );
@@ -277,7 +335,8 @@ class _NumberPadInput extends StatefulWidget {
   final bool enabled;
   final ValueChanged<String> onSubmit;
 
-  const _NumberPadInput({super.key, required this.enabled, required this.onSubmit});
+  const _NumberPadInput(
+      {super.key, required this.enabled, required this.onSubmit});
 
   @override
   State<_NumberPadInput> createState() => _NumberPadInputState();
@@ -345,8 +404,8 @@ class _InputDisplay extends StatelessWidget {
         border: Border.all(
           color: hasInput
               ? AppColors.primary.withOpacity(0.6)
-              : Colors.grey.shade300,
-          width: 2.5,
+              : Colors.grey.shade200,
+          width: 2,
         ),
         boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
@@ -359,7 +418,7 @@ class _InputDisplay extends StatelessWidget {
           style: TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w800,
-            color: hasInput ? AppColors.textDark : Colors.grey.shade400,
+            color: hasInput ? const Color(0xFF1A237E) : Colors.grey.shade400,
           ),
         ),
       ),
