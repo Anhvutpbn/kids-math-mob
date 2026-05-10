@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../models/session_models.dart';
 import '../../../multiplication/presentation/widgets/number_pad.dart';
@@ -50,31 +51,42 @@ class _AnswerOptionsState extends State<AnswerOptions> {
       final List<Widget> children = [];
       for (int i = 0; i < options.length; i++) {
         final opt = options[i];
-        final isSelected = _selected == opt;
+        final color = _palette[i % _palette.length];
+        final isSel = _selected == opt;
         children.add(Expanded(
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isSelected ? AppColors.primary : Colors.white,
-                foregroundColor: isSelected ? Colors.white : AppColors.textDark,
-                side: BorderSide(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
-                  width: 2.5,
-                ),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: isSelected ? 6 : 2,
+          child: _BounceCard(
+            onTap: widget.enabled
+                ? () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _selected = opt);
+                    widget.onAnswer(opt);
+                  }
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isSel ? Colors.white : color,
+                borderRadius: BorderRadius.circular(24),
+                border: isSel ? Border.all(color: color, width: 4) : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(isSel ? 0.5 : 0.3),
+                    blurRadius: isSel ? 14 : 6,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              onPressed: widget.enabled
-                  ? () {
-                      setState(() => _selected = opt);
-                      widget.onAnswer(opt);
-                    }
-                  : null,
-              child: Text(opt,
-                  style: const TextStyle(
-                      fontSize: 28, fontWeight: FontWeight.w700)),
+              child: Center(
+                child: Text(
+                  opt,
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    color: isSel ? color : Colors.white,
+                  ),
+                ),
+              ),
             ),
           ),
         ));
@@ -83,7 +95,7 @@ class _AnswerOptionsState extends State<AnswerOptions> {
       return Column(children: children);
     }
 
-    // fill_blank → NumberPad (SK05 cộng, SK06 trừ, SK07 điền số)
+    // fill_blank → NumberPad (SK05, SK06, SK07)
     return _NumberPadInput(
       key: ValueKey(widget.question.id),
       enabled: widget.enabled,
@@ -92,7 +104,12 @@ class _AnswerOptionsState extends State<AnswerOptions> {
   }
 }
 
-// ── Min/Max selector — adaptive grid fills available space ────────────────────
+const _palette = [
+  Color(0xFFE53935),
+  Color(0xFF1E88E5),
+  Color(0xFF43A047),
+  Color(0xFFFB8C00),
+];
 
 const _squareColors = [
   Color(0xFFE53935),
@@ -105,6 +122,61 @@ const _squareColors = [
   Color(0xFFD81B60),
   Color(0xFF558B2F),
 ];
+
+// ── Bounce animation wrapper ──────────────────────────────────────────────────
+
+class _BounceCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  const _BounceCard({required this.child, this.onTap});
+
+  @override
+  State<_BounceCard> createState() => _BounceCardState();
+}
+
+class _BounceCardState extends State<_BounceCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 320));
+    _scale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.88), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.88, end: 1.06), weight: 45),
+      TweenSequenceItem(tween: Tween(begin: 1.06, end: 1.0), weight: 25),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _tap() {
+    if (widget.onTap == null) return;
+    _ctrl.forward(from: 0);
+    widget.onTap!();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _tap,
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// ── Min/Max selector ─────────────────────────────────────────────────────────
 
 class _MinMaxSelector extends StatelessWidget {
   final List<String> options;
@@ -128,8 +200,13 @@ class _MinMaxSelector extends StatelessWidget {
   Widget _square(String opt, int i, double height) {
     final color = _squareColors[i % _squareColors.length];
     final isSel = selected == opt;
-    return GestureDetector(
-      onTap: enabled ? () => onAnswer(opt) : null,
+    return _BounceCard(
+      onTap: enabled
+          ? () {
+              HapticFeedback.lightImpact();
+              onAnswer(opt);
+            }
+          : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         height: height,

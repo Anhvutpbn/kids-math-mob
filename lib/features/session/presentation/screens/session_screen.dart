@@ -74,7 +74,15 @@ class SessionScreen extends ConsumerWidget {
           final q = state.currentQuestion;
           if (q == null) return const SizedBox();
 
-          return SafeArea(
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFF5F0FF), Color(0xFFF0F8FF)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: SafeArea(
             child: Stack(
               children: [
                 Padding(
@@ -122,6 +130,7 @@ class SessionScreen extends ConsumerWidget {
                     onDismiss: () => ref.read(sessionProvider.notifier).clearFeedback(),
                   ),
               ],
+            ),
             ),
           );
         },
